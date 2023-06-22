@@ -32,7 +32,9 @@ class Monitor
 public:
   typedef std::shared_ptr<Monitor> SharedPtr;
 
-
+  static SharedPtr create(std::chrono::milliseconds const loop_duration_target) {
+    return std::make_shared<Monitor>(loop_duration_target, std::chrono::milliseconds(0));
+  }
   static SharedPtr create(std::chrono::milliseconds const loop_duration_target, std::chrono::milliseconds const loop_duration_epsilon) {
     return std::make_shared<Monitor>(loop_duration_target, loop_duration_epsilon);
   }
