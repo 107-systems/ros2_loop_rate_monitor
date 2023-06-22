@@ -18,3 +18,40 @@ cd $COLCON_WS
 source /opt/ros/humble/setup.bash
 colcon build --packages-select ros2_loop_rate_monitor
 ```
+
+#### How-to-use
+* **package.xml**:
+```diff
++   <depend>ros2_loop_rate_monitor</depend>
+```
+* **CMakeLists.txt**:
+```diff
++   find_package(ros2_loop_rate_monitor REQUIRED)
+...
+-   ament_target_dependencies(${MY_TARGET} rclcpp)
++   ament_target_dependencies(${MY_TARGET} rclcpp ros2_loop_rate_monitor)
+```
+* **Node.h/.cpp**:
+```C++
+#include <ros2_loop_rate_monitor/Monitor.h>
+/* ... */
+static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
+loop_rate::Monitor::SharedPtr _io_loop_rate_monitor;
+/* ... */
+_io_loop_rate_monitor = loop_rate::Monitor::create(IO_LOOP_RATE, std::chrono::milliseconds(1));
+/* ... */
+void Node::io_loop()
+{
+  _io_loop_rate_monitor->update();
+  if (auto const [timeout, opt_timeout_duration] = _io_loop_rate_monitor->isTimeout();
+    timeout == loop_rate::Monitor::Timeout::Yes)
+  {
+    RCLCPP_WARN_THROTTLE(get_logger(),
+                         *get_clock(),
+                         1000,
+                         "io_loop should be called every %ld ms, but is %ld ms instead",
+                         IO_LOOP_RATE.count(),
+                         opt_timeout_duration.value().count());
+  }
+  /* ... */
+```
